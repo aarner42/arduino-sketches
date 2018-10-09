@@ -25,10 +25,14 @@
 /************ define pins *********/
 #define RELAY D1     // D1 drives 120v relay
 #define CONTACT D2   // D2 connects to momentary switch
-#define LED D3       // D3 powers switch illumination
+#define LED D4       // D3 powers switch illumination
+/************ define names for device in alexa, hostname, mqtt feed ****************/
+#define ALEXA_NAME    "Cellar Office"
+#define LAN_HOSTNAME  "cellar-office"
+#define MQTT_FEED     "/feeds/ledgemont/power/cellarOffice"
 
-String alexaCommand = "LAB"; // for example family room"
-const char Switch_Name[] = "Prototype1";
+String alexaCommand = ALEXA_NAME; // for example family room"
+const char Switch_Name[] = LAN_HOSTNAME;
 boolean lightState = false;
 
  /************ Global State (you don't need to change this!) ******************/
@@ -43,8 +47,9 @@ boolean lightState = false;
     /****************************** Feeds ***************************************/
     
     // Setup a feed called 'onoff' for subscribing to changes.
-    Adafruit_MQTT_Subscribe onoffbutton = Adafruit_MQTT_Subscribe(&mqtt, AIO_USERNAME "/feeds/ledgemont.power" );
-    Adafruit_MQTT_Publish onoffbuttonPublish = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/ledgemont.power");
+    
+    Adafruit_MQTT_Subscribe onoffbutton = Adafruit_MQTT_Subscribe(&mqtt, AIO_USERNAME MQTT_FEED);
+    Adafruit_MQTT_Publish onoffbuttonPublish = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME MQTT_FEED);
     //Adafruit_MQTT_Publish lastwill = Adafruit_MQTT_Publish(&mqtt, WILL_FEED);
 
 /*************************** Sketch Code ************************************/
