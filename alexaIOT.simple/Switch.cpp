@@ -103,6 +103,10 @@ void Switch::handleEventservice(){
 void Switch::handleUpnpControl(){
   Serial.println("########## Responding to  /upnp/control/basicevent1 ... ##########");      
   
+  //for (int x=0; x <= HTTP.args(); x++) {
+  //  Serial.println(HTTP.arg(x));
+  //}
+
   String request = server->arg(0);      
   Serial.print("request:");
   Serial.println(request);

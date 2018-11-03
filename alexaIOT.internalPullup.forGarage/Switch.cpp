@@ -59,7 +59,14 @@ void Switch::startWebServer(){
     handleEventservice();
   });
 
-  //server->onNotFound(handleNotFound);
+  server->on("/checkDoor", [&]() {
+    handleCheckDoorStatus();
+  });
+
+  server->on("/toggleDoor", [&]() {
+    handleToggleDoor();
+  });
+
   server->begin();
 
   Serial.println("WebServer started on port: ");
@@ -213,4 +220,56 @@ void Switch::respondToSearch(IPAddress& senderIP, unsigned int senderPort) {
   UDP.endPacket();                    
 
    Serial.println("Response sent !");
+   
 }
+
+void Switch::setDoorState(unsigned int doorState) {
+  state = doorState;
+}
+
+void Switch::handleCheckDoorStatus(){
+  Serial.println("\n########## Responding to checkDoorState ... ########\n");
+  String html;
+  String start = "<html>"
+        "<head>Erxleben's Garage Door</head>"
+        "<title>Erxleben's GarageDoor-Check</title>"
+          "<body>"
+            "<h2>Checking garage door state</h2>"
+            "<p/>"
+              "<h3>Garage door status is:</h3>"
+                "<h2>\r\n";
+  String middle = "UNKNOWN-SCRIPT FAULT";
+  if (state==0) {
+    middle = "OPEN.";
+  } 
+  if (state==1) {
+    middle = "Closed.";
+  }
+  if (state==2) {
+    middle = "Unable to determine...might be traveling.  Check back in 10 seconds.";
+  }
+  if (state==3) {
+    middle = "Inconsistent readings...check sensors";
+  }
+  String end =  "\r\n</h3>"
+                "</body></html>\r\n"
+        "\r\n";
+  html = start + middle + end;          
+  server->send(200, "text/html", html.c_str());
+}
+
+void Switch::handleToggleDoor(){
+  Serial.println("\n########## Responding to checkDoorState ... ########\n");
+  String html = "<html>"
+        "<head>Erxleben's Garage Toggle</head>"
+        "<title>Erxleben's GarageDoor-Cycle</title>"
+        "<body>"
+            "<h2>Sending open/close command</h2>"
+            "<p/>"
+              "<h3>Command:</h3>"
+                "<h2>SEND</h2></body></html>\r\n"
+          "\r\n";
+          onCallback();
+    server->send(200, "text/html", html.c_str());
+}
+

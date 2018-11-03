@@ -11,46 +11,17 @@
 #include "UpnpBroadcastResponder.h"
 #include "CallbackFunction.h"
 
-#include "Adafruit_MQTT.h"
-#include "Adafruit_MQTT_Client.h"
-
-/************************* Adafruit.io Setup *********************************/
-// if you like connect to adafruit you can use this setup
-#define AIO_SERVER      "io.adafruit.com"
-#define AIO_SERVERPORT  1883                   // use 8883 for SSL
-#define AIO_USERNAME    "aarner"
-#define AIO_KEY         "feaf5ab0e1414683993972d1ee3161cc"
- /*************************  *********************************/
- 
 /************ define pins *********/
 #define RELAY D1     // D1 drives 120v relay
 #define CONTACT D2   // D2 connects to momentary switch
 #define LED D4       // D4 powers switch illumination
 /************ define names for device in alexa, hostname, mqtt feed ****************/
-#define ALEXA_NAME    "Zed Alpha Eight"
-#define LAN_HOSTNAME  "ZedAlphaEight"
-#define MQTT_FEED     "/Feeds/ledgemont/power"
-#define MQTT_SHUTDOWN_FEED "/Feeds/ledgemont/shutdown"
+#define ALEXA_NAME    "Zed Alpha Two"
+#define LAN_HOSTNAME  "ZedAlphaTwo"
+
 String alexaCommand = ALEXA_NAME; // for example family room"
 const char Switch_Name[] = LAN_HOSTNAME;
 boolean lightState = false;
-
- /************ Global State (you don't need to change this!) ******************/
-    // Create an ESP8266 WiFiClient class to connect to the MQTT server.
-    WiFiClient client;
-    // or... use WiFiFlientSecure for SSL
-    //WiFiClientSecure client;
-    
-    // Setup the MQTT client class by passing in the WiFi client and MQTT server and login details.
-    Adafruit_MQTT_Client mqtt(&client, AIO_SERVER, AIO_SERVERPORT, AIO_USERNAME, AIO_KEY);
-    //Adafruit_MQTT_Publish diningLive = Adafruit_MQTT_Publish(&mqtt, HEALTH_DINING_FEED, MQTT_QOS_1);
-    /****************************** Feeds ***************************************/
-    
-    // Setup a feed called 'onoff' for subscribing to changes.
-    
-    Adafruit_MQTT_Subscribe onoffbutton = Adafruit_MQTT_Subscribe(&mqtt, AIO_USERNAME MQTT_SHUTDOWN_FEED);
-    Adafruit_MQTT_Publish onoffbuttonPublish = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME MQTT_FEED);
-    //Adafruit_MQTT_Publish lastwill = Adafruit_MQTT_Publish(&mqtt, WILL_FEED);
 
 /*************************** Sketch Code ************************************/
 // prototypes
@@ -109,10 +80,7 @@ void setup() {
         
 // Hostname defaults to esp8266-Switch_NAME
   ArduinoOTA.setHostname(Switch_Name);
-        
-// No authentication by default
-// ArduinoOTA.setPassword((const char *)"123");
-        
+     
   ArduinoOTA.onStart([]() {
      Serial.println("Start");
    });
@@ -120,7 +88,8 @@ void setup() {
   ArduinoOTA.onEnd([]() {
       Serial.println("\nEnd");
    });
-   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+  
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
        Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
     });
 
@@ -135,63 +104,27 @@ void setup() {
    
   ArduinoOTA.begin();   
 
-////// MQTT
-
-// Setup MQTT subscription for onoff feed.
-  mqtt.subscribe(&onoffbutton);
-
-  // Setup MQTT will to set on/off to "OFF" when we disconnect
-  //mqtt.will(WILL_FEED, "OFF");
 }
 
 void(* resetFunc) (void) = 0;//declare reset function at address 0
  
 void loop()
 {
+  ArduinoOTA.handle();
 
-   ArduinoOTA.handle();
-
-    //onoffbuttonPublish.publish("OFF");  // make sure we publish OFF first thing after connecting
- 
-  if(wifiConnected){
+  if (wifiConnected) {
     upnpBroadcastResponder.serverLoop();
-      
     light->serverLoop();
-	 
-
-    MQTT_connect();
-        
-    Adafruit_MQTT_Subscribe *subscription;
-      while ((subscription = mqtt.readSubscription(500))) {
-                  if (subscription == &onoffbutton) {
-            
-                  Serial.print(F("Got: "));
-                  Serial.println((char *)onoffbutton.lastread);
-            
-                  if (strcmp((char *)onoffbutton.lastread, "ON") == 0) {
-                    digitalWrite(LED, LOW); 
-                    digitalWrite(RELAY, HIGH);
-                    Serial.print("shoule be ON");
-                  }
-                  if (strcmp((char *)onoffbutton.lastread, "OFF") == 0) {
-                    digitalWrite(LED, HIGH);
-                    digitalWrite(RELAY, LOW); 
-                    Serial.print("shoule be OFF");
-                  }
-                  
-                }
-      } 
-    }
-//    Serial.print("Checking for switch press...");
+  }
     boolean buttonState = digitalRead(CONTACT);
-//    Serial.print("button state:");
-//    Serial.print(buttonState);
     if (buttonState == LOW) {
       if(lightState == true) {
         lightsOff();
       } else {
         lightsOn();
       }
+      //affect a debounce - keep momentary switch looping multiple times/sec
+      delay(1000);
     }
      
 
@@ -211,38 +144,11 @@ void loop()
     }
 }
 
-void MQTT_connect() {
-          int8_t ret;
-        
-          // Stop if already connected.
-          if (mqtt.connected()) {
-            return;
-          }
-        
-          Serial.print("Connecting to MQTT... ");
-        
-          uint8_t retries = 3;
-          while ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
-               Serial.println(mqtt.connectErrorString(ret));
-               Serial.println("Retrying MQTT connection in 5 seconds...");
-               mqtt.disconnect();
-               delay(5000);  // wait 5 seconds
-               retries--;
-               if (retries == 0) {
-                 // basically die and wait for WDT to reset me
-                // while (1);
-                 resetFunc();  //call reset
-               }
-          }
-          Serial.println("MQTT Connected!");
-        }
-        
 void lightsOn() {
     Serial.println("Switch 1 turn on ...");
     digitalWrite(LED, LOW);
     digitalWrite(RELAY, HIGH);
     lightState = true;
-    onoffbuttonPublish.publish("ON");
 }
 
 void lightsOff() {
@@ -250,7 +156,6 @@ void lightsOff() {
     digitalWrite(LED, HIGH);
     digitalWrite(RELAY, LOW);
     lightState = false;
-    onoffbuttonPublish.publish("OFF");
 }
 
 // connect to wifi – returns true if successful or false if not
