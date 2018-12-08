@@ -1,14 +1,13 @@
 #include "Switch.h"
 #include "CallbackFunction.h"
 
-
-        
-//<<constructor>> qA
+   
+//<<constructor>> 
 Switch::Switch(){
     Serial.println("default constructor called");
 }
 //Switch::Switch(String alexaInvokeName,unsigned int port){
-Switch::Switch(String alexaInvokeName, unsigned int port, CallbackFunction oncb, CallbackFunction offcb){
+Switch::Switch(String alexaInvokeName, unsigned int port, CallbackFunction oncb, CallbackFunction offcb, CallbackFunction resetcb){
     uint32_t chipId = ESP.getChipId();
     char uuid[64];
     sprintf_P(uuid, PSTR("38323636-4558-4dda-9188-cda0e6%02x%02x%02x"),
@@ -23,6 +22,7 @@ Switch::Switch(String alexaInvokeName, unsigned int port, CallbackFunction oncb,
     localPort = port;
     onCallback = oncb;
     offCallback = offcb;
+    resetCallback = resetcb;
     state = 0;
     startWebServer();
 }
@@ -57,6 +57,10 @@ void Switch::startWebServer(){
 
   server->on("/eventservice.xml", [&]() {
     handleEventservice();
+  });
+  
+  server->on("/reset", [&]() {
+    handleReset();
   });
 
   //server->onNotFound(handleNotFound);
@@ -143,6 +147,12 @@ void Switch::handleRoot(){
   server->send(200, "text/plain", "You should tell Alexa to discover devices");
 }
 
+
+void Switch::handleReset(){
+  server->send(200, "text/plain", "OMG WERE GONNA DIE!!!!");
+  resetCallback();
+}
+
 void Switch::handleSetupXml(){
   Serial.println("\n########## Responding to setup.xml ... ########\n");
   
@@ -184,6 +194,10 @@ String Switch::getAlexaInvokeName() {
     return device_name;
 }
 
+void Switch::setState(unsigned int newState) {
+  state = newState;
+}
+
 void Switch::respondToSearch(IPAddress& senderIP, unsigned int senderPort) {
   Serial.println("");
   Serial.print("Sending response to ");
@@ -212,5 +226,5 @@ void Switch::respondToSearch(IPAddress& senderIP, unsigned int senderPort) {
   UDP.write(response.c_str());
   UDP.endPacket();                    
 
-   Serial.println("Response sent !");
+  Serial.println("Response sent !");
 }

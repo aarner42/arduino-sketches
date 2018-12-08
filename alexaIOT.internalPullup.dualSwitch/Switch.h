@@ -32,6 +32,7 @@ public:
         String getAlexaInvokeName();
         void serverLoop();
         void respondToSearch(IPAddress& senderIP, unsigned int senderPort);
+        void setState(unsigned int newState);
 };
  
 #endif

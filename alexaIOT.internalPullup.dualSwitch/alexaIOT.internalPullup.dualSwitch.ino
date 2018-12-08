@@ -12,24 +12,33 @@
 #include "CallbackFunction.h"
 
 /************ define pins *********/
-#define RELAY   D1   // D1 drives 120v relay
-#define CONTACT D3   // D3 connects to momentary switch
-#define LED D4       // D4 powers switch illumination
+#define RELAY_ONE D7     // D7 drives 120v relay
+#define RELAY_TWO D0     // D0 drives 120v relay
+#define CONTACT_ONE D2   // D2 connects to momentary switch
+#define CONTACT_TWO D3   // D3 connects to momentary switch
+#define LED_ONE D5       // D5 powers switch illumination
+#define LED_TWO D6       // D6 powers switch illumination
 /************ define names for device in alexa, hostname, mqtt feed ****************/
-#define ALEXA_NAME    "Zed Alpha One"
-#define LAN_HOSTNAME  "ZedAlphaOne"
-#define WIFI_MISSING_TIMEOUT_SECONDS 30
-String alexaCommand = ALEXA_NAME; // for example family room"
+#define ALEXA_NAME_ONE    "Tango Golf One"
+#define LAN_HOSTNAME      "TangoGolf1-2"
+#define ALEXA_NAME_TWO    "Tango Golf Two"
+
+
+String alexaCommandOne = ALEXA_NAME_ONE; // for example family room"
 const char Switch_Name[] = LAN_HOSTNAME;
-boolean lightState = false;
+String alexaCommandTwo = ALEXA_NAME_TWO; // for example family room"
+
 
 /*************************** Sketch Code ************************************/
 // prototypes
 boolean connectWifi();
 
 //on/off callbacks 
-void lightsOn();  
-void lightsOff();
+void lightsOnOne();  
+void lightsOffOne();
+
+void lightsOnTwo();  
+void lightsOffTwo();
 
 
 // this can be empty as device uses WIFI manager to setup wifi
@@ -39,17 +48,27 @@ unsigned int wifiDropCount = 0;
 boolean wifiConnected = false;
 UpnpBroadcastResponder upnpBroadcastResponder;
 
-Switch *light = NULL;
+Switch *lightOne = NULL;
+Switch *lightTwo = NULL;
+boolean lightStateOne;
+boolean lightStateTwo;
 
 //called at startup
 void setup() {
   
-  pinMode(LED, OUTPUT);
-  pinMode(RELAY, OUTPUT);
-  pinMode(CONTACT, INPUT_PULLUP);
+  pinMode(LED_ONE, OUTPUT);
+  pinMode(RELAY_ONE, OUTPUT);
+  pinMode(CONTACT_ONE, INPUT_PULLUP);
+
+  pinMode(LED_TWO, OUTPUT);
+  pinMode(RELAY_TWO, OUTPUT);
+  pinMode(CONTACT_TWO, INPUT_PULLUP);
   
-  digitalWrite(LED, HIGH);   // default switch illumination to on
-  digitalWrite(RELAY, LOW);  // shut off the high voltage relay side
+  digitalWrite(LED_ONE, HIGH);   // default switch illumination to on
+  digitalWrite(LED_TWO, HIGH);   // default switch illumination to on
+  digitalWrite(RELAY_ONE, HIGH);  // shut off the high voltage relay side
+  digitalWrite(RELAY_TWO, HIGH);  // shut off the high voltage relay side
+
   
   Serial.begin(115200);
   Serial.print("Allocating WifiManager...");
@@ -57,7 +76,7 @@ void setup() {
   WiFiManager wifiManager;
 
   Serial.println("Connecting To AP...");
-  wifiManager.autoConnect(LAN_HOSTNAME);
+  wifiManager.autoConnect("D1Mini.001");
 
   Serial.println("Verifying Connection present...");
   // Initialise wifi connection
@@ -68,10 +87,12 @@ void setup() {
     
     // Define your switches here. Max 14
     // Format: Alexa invocation name, local port no, on callback, off callback
-    light = new Switch(alexaCommand, 80, lightsOn, lightsOff);
+    lightOne = new Switch(alexaCommandOne, 80, lightsOnOne, lightsOffOne);
+    lightTwo = new Switch(alexaCommandTwo, 88, lightsOnTwo, lightsOffTwo);
 
     Serial.println("Adding switches upnp broadcast responder");
-    upnpBroadcastResponder.addDevice(*light);
+    upnpBroadcastResponder.addDevice(*lightOne);
+    upnpBroadcastResponder.addDevice(*lightTwo);
   }
 
 
@@ -114,14 +135,26 @@ void loop()
 
   if (wifiConnected) {
     upnpBroadcastResponder.serverLoop();
-    light->serverLoop();
+    lightOne->serverLoop();
+    lightTwo->serverLoop();
   }
-    boolean buttonState = digitalRead(CONTACT);
-    if (buttonState == LOW) {
-      if(lightState == true) {
-        lightsOff();
+    boolean buttonStateOne = digitalRead(CONTACT_ONE);
+    if (buttonStateOne == LOW) {
+      if(lightStateOne == true) {
+        lightsOffOne();
       } else {
-        lightsOn();
+        lightsOnOne();
+      }
+      //affect a debounce - keep momentary switch looping multiple times/sec
+      delay(333);
+    }
+
+    boolean buttonStateTwo = digitalRead(CONTACT_TWO);
+    if (buttonStateTwo == LOW) {
+      if(lightStateTwo == true) {
+        lightsOffTwo();
+      } else {
+        lightsOnTwo();
       }
       //affect a debounce - keep momentary switch looping multiple times/sec
       delay(333);
@@ -134,7 +167,7 @@ void loop()
       wifiDropCount++;
       Serial.println(wifiDropCount);
       delay(250);
-      if (wifiDropCount > (WIFI_MISSING_TIMEOUT_SECONDS * 4)) {
+      if (wifiDropCount > 100) {
         Serial.println("Wifi Missing for 30+ seconds.  Resetting...");
         resetFunc();  //call reset        
       }
@@ -144,19 +177,41 @@ void loop()
     }
 }
 
-void lightsOn() {
+void lightsOnOne() {
     Serial.println("Switch 1 turn on ...");
-    digitalWrite(LED, LOW);
-    digitalWrite(RELAY, HIGH);
-    lightState = true;
+    digitalWrite(LED_ONE, LOW);
+    digitalWrite(RELAY_ONE, LOW);
+    lightStateOne = true;
+    lightOne->setState(1);
+    
 }
 
-void lightsOff() {
+void lightsOffOne() {
     Serial.println("Switch 1 turn off ...");
-    digitalWrite(LED, HIGH);
-    digitalWrite(RELAY, LOW);
-    lightState = false;
+    digitalWrite(LED_ONE, HIGH);
+    digitalWrite(RELAY_ONE, HIGH);
+    lightStateOne = false;
+    lightTwo->setState(0);
 }
+
+
+void lightsOnTwo() {
+    Serial.println("Switch 2 turn on ...");
+    digitalWrite(LED_TWO, LOW);
+    digitalWrite(RELAY_TWO, LOW);
+    lightStateTwo = true;
+    lightTwo->setState(1);
+    
+}
+
+void lightsOffTwo() {
+    Serial.println("Switch 2 turn off ...");
+    digitalWrite(LED_TWO, HIGH);
+    digitalWrite(RELAY_TWO, HIGH);
+    lightStateTwo = false;
+    lightTwo->setState(0);
+}
+
 
 // connect to wifi – returns true if successful or false if not
 boolean connectWifi(){

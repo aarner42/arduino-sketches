@@ -103,10 +103,6 @@ void Switch::handleEventservice(){
 void Switch::handleUpnpControl(){
   Serial.println("########## Responding to  /upnp/control/basicevent1 ... ##########");      
   
-  //for (int x=0; x <= HTTP.args(); x++) {
-  //  Serial.println(HTTP.arg(x));
-  //}
-
   String request = server->arg(0);      
   Serial.print("request:");
   Serial.println(request);
@@ -189,6 +185,7 @@ String Switch::getAlexaInvokeName() {
 }
 
 void Switch::respondToSearch(IPAddress& senderIP, unsigned int senderPort) {
+  
   Serial.println("");
   Serial.print("Sending response to ");
   Serial.println(senderIP);
@@ -218,3 +215,8 @@ void Switch::respondToSearch(IPAddress& senderIP, unsigned int senderPort) {
 
    Serial.println("Response sent !");
 }
+
+void Switch::setState(unsigned int newState) {
+  state = newState;
+}
+
