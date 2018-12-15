@@ -19,19 +19,21 @@ private:
         unsigned int state;
         CallbackFunction onCallback;
         CallbackFunction offCallback;
-    
+        CallbackFunction resetCallback;
         void startWebServer();
         void handleEventservice();
         void handleUpnpControl();
         void handleRoot();
         void handleSetupXml();
+        void handleReset();
 public:
         Switch();
-        Switch(String alexaInvokeName, unsigned int port, CallbackFunction onCallback, CallbackFunction offCallback);
+        Switch(String alexaInvokeName, unsigned int port, CallbackFunction onCallback, CallbackFunction offCallback, CallbackFunction resetCallback);
         ~Switch();
         String getAlexaInvokeName();
         void serverLoop();
         void respondToSearch(IPAddress& senderIP, unsigned int senderPort);
+        void setState(unsigned int newState);
 };
  
 #endif
