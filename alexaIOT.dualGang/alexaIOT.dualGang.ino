@@ -19,10 +19,10 @@
 #define LED_ONE D5       // D5 powers switch illumination
 #define LED_TWO D6       // D6 powers switch illumination
 /************ define names for device in alexa, hostname, mqtt feed ****************/
-#define ALEXA_NAME_ONE    "Tango Golf One"
-#define LAN_HOSTNAME      "TangoGolf1-2"
-#define ALEXA_NAME_TWO    "Tango Golf Two"
-
+#define ALEXA_NAME_ONE    "Juliet Delta Three"
+#define LAN_HOSTNAME      "JulietDelta3-4"
+#define ALEXA_NAME_TWO    "Juliet Delta Four"
+#define WIFI_TOLERANCE_SECONDS 1000
 
 String alexaCommandOne = ALEXA_NAME_ONE; // for example family room"
 const char Switch_Name[] = LAN_HOSTNAME;
@@ -167,7 +167,7 @@ void loop()
       wifiDropCount++;
       Serial.println(wifiDropCount);
       delay(250);
-      if (wifiDropCount > 100) {
+      if (wifiDropCount > WIFI_TOLERANCE_SECONDS) {
         Serial.println("Wifi Missing for 30+ seconds.  Resetting...");
         resetFunc();  //call reset        
       }

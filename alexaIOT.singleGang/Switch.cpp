@@ -140,7 +140,8 @@ void Switch::handleUpnpControl(){
 }
 
 void Switch::handleRoot(){
-  server->send(200, "text/plain", "You should tell Alexa to discover devices");
+  String statusResponse = device_name + " - You should tell Alexa to discover devices";
+  server->send(200, "text/plain", statusResponse);
 }
 
 void Switch::handleSetupXml(){

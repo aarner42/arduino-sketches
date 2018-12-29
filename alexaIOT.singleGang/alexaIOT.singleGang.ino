@@ -16,9 +16,9 @@
 #define CONTACT D3   // D3 connects to momentary switch
 #define LED D4       // D4 powers switch illumination
 /************ define names for device in alexa, hostname, mqtt feed ****************/
-#define ALEXA_NAME    "Zed Alpha One"
-#define LAN_HOSTNAME  "ZedAlphaOne"
-#define WIFI_MISSING_TIMEOUT_SECONDS 30
+#define ALEXA_NAME    "OTA Test One"
+#define LAN_HOSTNAME  "OtaTestOne"
+#define WIFI_MISSING_TIMEOUT_SECONDS 500
 String alexaCommand = ALEXA_NAME; // for example family room"
 const char Switch_Name[] = LAN_HOSTNAME;
 boolean lightState = false;
@@ -135,7 +135,7 @@ void loop()
       Serial.println(wifiDropCount);
       delay(250);
       if (wifiDropCount > (WIFI_MISSING_TIMEOUT_SECONDS * 4)) {
-        Serial.println("Wifi Missing for 30+ seconds.  Resetting...");
+        Serial.println("Wifi Missing for too long.  Resetting...");
         resetFunc();  //call reset        
       }
     } else {
