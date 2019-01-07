@@ -20,7 +20,7 @@
 #define ALEXA_NAME    "Zed Alpha One"
 #define LAN_HOSTNAME  "ZedAlphaOne"
 #define WIFI_MISSING_TIMEOUT_SECONDS 30
-#define CURRENT_FLOW_NONZERO_THRESHOLD 10
+#define CURRENT_FLOW_NONZERO_THRESHOLD 100
 String alexaCommand = ALEXA_NAME; // for example family room"
 const char Switch_Name[] = LAN_HOSTNAME;
 boolean lightState = false;

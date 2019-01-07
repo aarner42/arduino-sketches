@@ -1,6 +1,3 @@
-/*
- Version 0.3 - March 06 2018
-*/ 
 
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
@@ -9,6 +6,7 @@
 #include <ArduinoJson.h> 
 #include <StreamString.h>
 #include <ArduinoOTA.h>
+#include "CurrentSense.h"
 
 ESP8266WiFiMulti WiFiMulti;
 WebSocketsClient webSocket;
@@ -17,13 +15,14 @@ WiFiClient client;
 #define MyApiKey "d66b0116-ac4f-43ed-9087-5d0e154554c4" 
 #define MySSID "Dutenhoefer"        
 #define MyWifiPassword "CepiCire99" 
-#define DEVICE_ID "5c328a01f43c920caa1004ca"  // deviceId is the ID assgined to your smart-home-device in sinric.com dashboard. Copy it from dashboard and paste it here
+#define DEVICE_ID "5c329deb86fecf10abd580e6"  // deviceId is the ID assgined to your smart-home-device in sinric.com dashboard. Copy it from dashboard and paste it here
 #define HEARTBEAT_INTERVAL 300000 // 5 Minutes 
 #define LAN_HOSTNAME  "TangoWhiskeyOne"
 /************ define pins *********/
 #define RELAY   D1   // D1 drives 120v relay
 #define CONTACT D3   // D3 connects to momentary switch
 #define LED D4       // D4 powers switch illumination
+#define CURRENT_FLOW_NONZERO_THRESHOLD 900
 
 uint64_t heartbeatTimestamp = 0;
 uint64_t printTimeStamp =0;
@@ -141,6 +140,7 @@ void setup() {
   pinMode(LED, OUTPUT);
   pinMode(RELAY, OUTPUT);
   pinMode(CONTACT, INPUT_PULLUP);
+  pinMode(A0, INPUT);
   
   digitalWrite(LED, HIGH);   // default switch illumination to on
   digitalWrite(RELAY, LOW);  // shut off the high voltage relay side
@@ -200,12 +200,12 @@ void setup() {
 
 void loop() {
   webSocket.loop();
-  uint64_t time = millis();
+  uint64_t time = millis();  
   if ((time - printTimeStamp) > 30000) {
     Serial.println("in loop...");
     printTimeStamp = time;
   }
-  
+    
   if(isConnected) {
       uint64_t now = millis();
       pingTimeStamp = now;
@@ -231,16 +231,29 @@ void loop() {
         }
     }
   }
+  //check whether the light is on.  (samples for 250 msec so effectively debounces the momentary switch)
+  float currentFlow = getCurrentFlowInAmps();
+  boolean newState = false; //(currentFlow > CURRENT_FLOW_NONZERO_THRESHOLD);
+
+  if (newState != lightState) {
+    Serial.print("Current Flow is presently: ");
+    Serial.print(currentFlow,2);
+    Serial.print(" light appears to be on: ");
+    Serial.println(newState);
+
+  	//notify server only if the state we believe we're in has changed;
+    String powerStatus = newState ? "ON" : "OFF";
+    setPowerStateOnServer(DEVICE_ID, powerStatus);
+  }
+  lightState = newState;
 
   boolean buttonState = digitalRead(CONTACT);
   if (buttonState == LOW) {
     if(lightState == true) {
-      lightsOff(true);
+      lightsOff(false);  //never notify on manual change - the sensor will cover it.
     } else {
-      lightsOn(true);
+      lightsOn(false);   //never notify on manual change - the sensor will cover it.
     }
-    //affect a debounce - stop momentary switch looping multiple times/sec
-    delay(333);
   }
   ArduinoOTA.handle();
 }
@@ -248,22 +261,18 @@ void loop() {
 void lightsOn(boolean notifyServer) {
     Serial.println("Switch 1 turn on ...");
     digitalWrite(LED, LOW);
-    digitalWrite(RELAY, HIGH);
-    lightState = true;
+    digitalWrite(RELAY, !digitalRead(RELAY));
     if (notifyServer) { setPowerStateOnServer(DEVICE_ID, "ON"); }
 }
 
 void lightsOff(boolean notifyServer) {
     Serial.println("Switch 1 turn off ...");
     digitalWrite(LED, HIGH);
-    digitalWrite(RELAY, LOW);
-    lightState = false;
+    digitalWrite(RELAY, !digitalRead(RELAY));
     if (notifyServer) { setPowerStateOnServer(DEVICE_ID, "OFF"); }
 }
 
-
 // Call ONLY If status changed manually. DO NOT CALL THIS IN loop() and overload the server. 
-
 void setPowerStateOnServer(String deviceId, String value) {
   Serial.print("Updating status on server.  Setting deviceID:");
   Serial.print(deviceId);
