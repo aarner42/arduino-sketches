@@ -1,12 +1,16 @@
 #ifndef CURRENTSENSE_H
 #define CURRENTSENSE_H
 
+/* CT Sensor consts */
+#define CURRENT_FLOW_NONZERO_THRESHOLD 200
 #define RESISTANCE 82.0
 #define SAMPLING_MSEC 333
 #define ZERO_CROSSING -126.2
-#define SCALE_FACTOR .5  //compensate for the quadruple-wired coil
+#define SCALE_FACTOR .3  //compensate for the triple-wired coil
+
+#include <Arduino.h>
 
 float getVPP();
-float getCurrentFlowInAmps();
+float calcCurrentFlow(boolean debug);
 
 #endif

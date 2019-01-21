@@ -2,7 +2,7 @@
 #include <Arduino.h>
  
  
-float getCurrentFlowInAmps()   {
+float calcCurrentFlow(boolean debug)   {
 
   float nVPP;   // Voltage measured across resistor
   float nCurrThruResistorPP; // Peak Current Measured Through Resistor
@@ -34,22 +34,22 @@ float getCurrentFlowInAmps()   {
    */
    
    nCurrentThruWire = ((nCurrThruResistorRMS * 1000) + ZERO_CROSSING) * SCALE_FACTOR;
+   if (debug) {
+     Serial.print("Volts Peak : ");
+     Serial.println(nVPP,3);
    
-//   Serial.print("Volts Peak : ");
-//   Serial.println(nVPP,3);
-// 
-//   Serial.print("Current Through Resistor (Peak) : ");
-//   Serial.print(nCurrThruResistorPP,3);
-//   Serial.println(" mA Peak to Peak");
-//   
-//   Serial.print("Current Through Resistor (RMS) : ");
-//   Serial.print(nCurrThruResistorRMS,3);
-//   Serial.println(" mA RMS");
-//   
-//   Serial.print("Current Through Wire : ");
-//   Serial.print(nCurrentThruWire,3);
-//   Serial.println(" mA RMS");
-
+     Serial.print("Current Through Resistor (Peak) : ");
+     Serial.print(nCurrThruResistorPP,3);
+     Serial.println(" mA Peak to Peak");
+     
+     Serial.print("Current Through Resistor (RMS) : ");
+     Serial.print(nCurrThruResistorRMS,3);
+     Serial.println(" mA RMS");
+     
+     Serial.print("Current Through Wire : ");
+     Serial.print(nCurrentThruWire,3);
+     Serial.println(" mA RMS");
+   }
    return nCurrentThruWire;
 
      
@@ -76,6 +76,8 @@ float getVPP()
    while((millis()-start_time) < SAMPLING_MSEC) //sample for some non-trivial time
    {
        readValue = analogRead(A0);
+       yield();
+       delay(10);
        // see if you have a new maxValue
        if (readValue > maxValue) 
        {

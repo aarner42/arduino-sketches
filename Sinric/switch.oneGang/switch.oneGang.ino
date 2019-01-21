@@ -17,9 +17,9 @@ WiFiClient client;
 #define MyApiKey "d66b0116-ac4f-43ed-9087-5d0e154554c4" 
 #define MySSID "Dutenhoefer"        
 #define MyWifiPassword "CepiCire99" 
-#define DEVICE_ID "5c328a01f43c920caa1004ca"  // deviceId is the ID assgined to your smart-home-device in sinric.com dashboard. Copy it from dashboard and paste it here
+#define DEVICE_ID "5c3826353d4dd357f795d360"  // deviceId is the ID assgined to your smart-home-device in sinric.com dashboard. Copy it from dashboard and paste it here
 #define HEARTBEAT_INTERVAL 300000 // 5 Minutes 
-#define LAN_HOSTNAME  "TangoWhiskeyOne"
+#define LAN_HOSTNAME  "AlphaBravoTwo"
 /************ define pins *********/
 #define RELAY   D1   // D1 drives 120v relay
 #define CONTACT D3   // D3 connects to momentary switch
